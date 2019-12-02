@@ -434,3 +434,6 @@ $RECYCLE.BIN/
 
 ## ionide
 .ionide
+
+# aoc
+2019/*.txt
