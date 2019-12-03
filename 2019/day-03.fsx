@@ -22,20 +22,26 @@ let steps sq =
     let h = Seq.head sq
     let t = Seq.tail sq
     Seq.scan scanner ((0,0), h) t
-    |> Seq.collect move    
+    |> Seq.map move    
+    |> Seq.map (Seq.skip 1)
+    |> Seq.concat
 
 let intersect a b = 
     let a' = Set.ofSeq a
     let b' = Set.ofSeq b
     Set.intersect a' b'
 
-let dist a b = 
+let manhattan_dist a b = 
     intersect a b
     |> Seq.map (fun (x, y) -> (abs x)  + (abs y))
-    |> Seq.sort
-    |> Seq.item 1
+    |> Seq.min
 
-
+let count_steps a b =
+    let count c = 
+        2 + (Seq.findIndex ((=) c) a)  + (Seq.findIndex ((=) c) b)
+    intersect a b
+        |> Seq.map count
+        |> Seq.min    
 
 let input =
     combine __SOURCE_DIRECTORY__ __SOURCE_FILE__
@@ -46,16 +52,6 @@ let input =
 let line_1 = input |> Seq.item 0 |> tokenize |> steps
 let line_2 = input |> Seq.item 1 |> tokenize |> steps
 
-dist line_1 line_2
+manhattan_dist line_1 line_2
+count_steps line_1 line_2
 
-let a = "R8,U5,L5,D3" |> tokenize |> steps |> Seq.toList
-let b = "U7,R6,D4,L4" |> tokenize |> steps |> Seq.toList
-
-let c = intersect a b |> Seq.skip 1
-
-let index (l : seq<int * int>) c = (Seq.findIndex ((=) c) l) 
-
-let ia = Seq.map (index a) c
-let ib = Seq.map (index b) c
-
-Seq.zip ia ib |> Seq.map (fun (x, y) -> x+y) |> Seq.sort
