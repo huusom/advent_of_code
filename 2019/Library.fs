@@ -3,6 +3,10 @@
 open System.IO
 open System.Text.RegularExpressions
 
+let split (c:char) (s:string) = s.Split([|c|])
+
+let substrings i (s:string) = (s.Substring(0, i)),(s.Substring(i))
+ 
 let replace (a: string) b (s: string) = s.Replace(a, b)
 
 let combine dir file = Path.Combine(dir, file)
