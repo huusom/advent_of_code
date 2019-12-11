@@ -1,4 +1,4 @@
-﻿module AdventOfCode
+﻿module Library
 
 open System.IO
 open System.Text.RegularExpressions
@@ -36,3 +36,17 @@ let loadMap mapper path = load path |> Option.map (Seq.map mapper)
 let loadChoose chooser path = load path |> Option.map (Seq.choose chooser)
 
 let loadTokens regex = loadChoose (tokenize (Regex regex))
+
+let distrib e L =
+    let rec aux pre post = 
+        seq {
+            match post with
+            | [] -> yield (L @ [e])
+            | h::t -> yield (List.rev pre @ [e] @ post)
+                      yield! aux (h::pre) t 
+        }
+    aux [] L
+
+let rec perms = function 
+    | [] -> Seq.singleton []
+    | h::t -> Seq.collect (distrib h) (perms t)
