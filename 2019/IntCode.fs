@@ -3,6 +3,7 @@ module IntCode
 type Parameter =
     | Position of int
     | Immediate of int
+    | Relative of int
 
 type ITerm =
     abstract Read: unit -> int
@@ -10,11 +11,12 @@ type ITerm =
     abstract Output: int list
 
 type Program =
-    { Name : string
+    { Name: string
       Pointer: int
+      RelativeBase: int
       Term: ITerm
       Memory: int [] }
-    with override this.ToString() = sprintf "%s: %i (%A)" this.Name this.Pointer this.Term.Output
+    override this.ToString() = sprintf "%s: %i (%A)" this.Name this.Pointer this.Term.Output
 
 type Op =
     | Halt
@@ -26,9 +28,10 @@ type Op =
     | JumpIfFalse of Parameter * Parameter
     | LessThan of Parameter * Parameter * Parameter
     | Equals of Parameter * Parameter * Parameter
+    | Offset of Parameter
 
 module Term =
-    type BufferTerm(initial : int seq) =
+    type BufferTerm(initial: int seq) =
         let mutable buffer = System.Collections.Generic.Queue<int>(initial)
 
         interface ITerm with
@@ -37,7 +40,10 @@ module Term =
 
             member __.Write i = buffer.Enqueue(i)
 
-            member __.Output = buffer |> Seq.cast<int> |> Seq.toList 
+            member __.Output =
+                buffer
+                |> Seq.cast<int>
+                |> Seq.toList
 
     let Null =
         { new ITerm with
@@ -45,11 +51,12 @@ module Term =
             member __.Write i = ()
             member __.Output = List.Empty }
 
-    let createBufferTerm input = BufferTerm(input) :> ITerm        
+    let createBufferTerm input = BufferTerm(input) :> ITerm
 
 module Program =
     let Empty =
         { Pointer = 0
+          RelativeBase = 0
           Name = ""
           Term = Term.Null
           Memory = [| 0 |] }
@@ -75,11 +82,13 @@ module Program =
         function
         | Immediate v -> v
         | Position v -> program.Memory.[v]
+        | Relative v -> program.Memory.[program.RelativeBase + v]
 
     let write program parameter v =
         match parameter with
         | Immediate p -> program.Memory.[p] <- v
         | Position p -> program.Memory.[p] <- v
+        | Relative p -> program.Memory.[program.RelativeBase + p] <- v
 
     let eval program =
         let instruction =
@@ -97,6 +106,7 @@ module Program =
         | '6' :: _ :: m1 :: m2 :: _ -> parameter2 program (m1, m2) |> JumpIfFalse
         | '7' :: _ :: m1 :: m2 :: m3 :: _ -> parameter3 program (m1, m2, m3) |> LessThan
         | '8' :: _ :: m1 :: m2 :: m3 :: _ -> parameter3 program (m1, m2, m3) |> Equals
+        | '9' :: _ :: m1 :: _ -> parameter1 program m1 |> Offset
         | _ -> Halt
 
     let exec program =
@@ -109,7 +119,7 @@ module Program =
             write program p3 ((read program p1) * (read program p2))
             { program with Pointer = program.Pointer + 4 }
         | Output p ->
-            program.Term.Write (read program p)
+            program.Term.Write(read program p)
             { program with Pointer = program.Pointer + 2 }
         | Input p ->
             write program p (program.Term.Read())
@@ -136,6 +146,11 @@ module Program =
                 else 0
             write program p3 v
             { program with Pointer = program.Pointer + 4 }
+        | Offset p ->
+            let v = read program p
+            { program with
+                  Pointer = program.Pointer + 2
+                  RelativeBase = program.RelativeBase + v }
 
 
     let rec run program =
