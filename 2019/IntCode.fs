@@ -35,11 +35,8 @@ module Term =
         let mutable buffer = System.Collections.Generic.Queue<int>(initial)
 
         interface ITerm with
-
             member __.Read() = buffer.Dequeue()
-
             member __.Write i = buffer.Enqueue(i)
-
             member __.Output =
                 buffer
                 |> Seq.cast<int>
@@ -65,6 +62,8 @@ module Program =
 
     let parameterOf program index =
         function
+        | '2' ->
+            program |> peek index |> Relative
         | '1' ->
             program
             |> peek index
@@ -82,7 +81,9 @@ module Program =
         function
         | Immediate v -> v
         | Position v -> program.Memory.[v]
-        | Relative v -> program.Memory.[program.RelativeBase + v]
+        | Relative v -> 
+            let i = program.RelativeBase + v
+            program.Memory.[program.RelativeBase + v]
 
     let write program parameter v =
         match parameter with
@@ -98,6 +99,7 @@ module Program =
             |> Seq.toList
             |> List.rev
         match instruction with
+        | '9' :: '9' :: _-> Halt
         | '1' :: _ :: m1 :: m2 :: m3 :: _ -> parameter3 program (m1, m2, m3) |> Add
         | '2' :: _ :: m1 :: m2 :: m3 :: _ -> parameter3 program (m1, m2, m3) |> Mult
         | '3' :: _ :: m1 :: _ -> parameter1 program m1 |> Input
@@ -107,7 +109,7 @@ module Program =
         | '7' :: _ :: m1 :: m2 :: m3 :: _ -> parameter3 program (m1, m2, m3) |> LessThan
         | '8' :: _ :: m1 :: m2 :: m3 :: _ -> parameter3 program (m1, m2, m3) |> Equals
         | '9' :: _ :: m1 :: _ -> parameter1 program m1 |> Offset
-        | _ -> Halt
+
 
     let exec program =
         function

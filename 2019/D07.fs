@@ -4,8 +4,6 @@ open IntCode
 open Xunit
 open System.IO
 
-
-
 let eval program i1 i0 = 
     let p = Program.runWithTerm (Term.createBufferTerm [i0;i1]) program
     p.Term.Output |> List.head
