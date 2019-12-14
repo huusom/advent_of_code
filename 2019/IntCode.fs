@@ -1,5 +1,7 @@
 module IntCode
 
+open System
+
 type Parameter =
     | Position of int
     | Immediate of int
@@ -13,10 +15,9 @@ type ITerm =
 type Program =
     { Name: string
       Pointer: int
-      RelativeBase: int
+      Register: int
       Term: ITerm
       Memory: int [] }
-    override this.ToString() = sprintf "%s: %i (%A)" this.Name this.Pointer this.Term.Output
 
 type Op =
     | Halt
@@ -53,106 +54,109 @@ module Term =
 module Program =
     let Empty =
         { Pointer = 0
-          RelativeBase = 0
+          Register = 0
           Name = ""
           Term = Term.Null
           Memory = [| 0 |] }
 
-    let peek index program = program.Memory.[program.Pointer + index]
 
-    let parameterOf program index =
-        function
-        | '2' ->
-            program |> peek index |> Relative
-        | '1' ->
-            program
-            |> peek index
-            |> Immediate
-        | _ ->
-            program
-            |> peek index
-            |> Position
+    let (~&) p = p.Pointer
+    let inline (&.) p i = try   p.Memory.[i] with _ -> failwithf "get memory.[%i] != %i" p.Memory.Length i 
+    let inline (&.+) p i = p &. (i + &p)
+    let inline (&.=) p (i, v) = try  p.Memory.[i] <- v with _ -> failwithf "set memory.[%i] != %i" p.Memory.Length i 
 
-    let parameter1 program c = parameterOf program 1 c
-    let parameter2 program (c1, c2) = parameterOf program 1 c1, parameterOf program 2 c2
-    let parameter3 program (c1, c2, c3) = parameterOf program 1 c1, parameterOf program 2 c2, parameterOf program 3 c3
+    let (~&&) p = p.Register
+    let inline (&&.+) p i = p &. (&&p + i)
 
-    let read program =
-        function
+    let param m i =
+        match m with
+        | '2' -> Relative i
+        | '1' -> Immediate i
+        | _ -> Position i
+
+    let eval prg =
+        let p = prg &. &prg
+        let cmd = (prg &. &prg).ToString().PadLeft(5, '0')
+
+        match cmd.Substring(3) with
+        | "99" -> Halt
+        | "01" -> Add(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2), param cmd.[0] (prg &.+ 3))
+        | "02" -> Mult(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2), param cmd.[0] (prg &.+ 3))
+        | "03" -> Input(param cmd.[2] (prg &.+ 1))
+        | "04" -> Output(param cmd.[2] (prg &.+ 1))
+        | "05" -> JumpIfTrue(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2))
+        | "06" -> JumpIfFalse(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2))
+        | "07" -> LessThan(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2), param cmd.[0] (prg &.+ 3))
+        | "08" -> Equals(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2), param cmd.[0] (prg &.+ 3))
+        | "09" -> Offset(param cmd.[2] (prg &.+ 1))
+
+    let get p o =
+        match o with
         | Immediate v -> v
-        | Position v -> program.Memory.[v]
-        | Relative v -> 
-            let i = program.RelativeBase + v
-            program.Memory.[program.RelativeBase + v]
+        | Position v -> p &. v
+        | Relative v -> p &. (&&p + v)
 
-    let write program parameter v =
-        match parameter with
-        | Immediate p -> program.Memory.[p] <- v
-        | Position p -> program.Memory.[p] <- v
-        | Relative p -> program.Memory.[program.RelativeBase + p] <- v
+    let set p o x =
+        match o with
+        | Immediate v -> ()
+        | Position v -> p &.= (v, x)
+        | Relative v -> p &.= (&&p+v, x)
+        p
 
-    let eval program =
-        let instruction =
-            program
-            |> peek 0
-            |> fun i -> i.ToString().PadLeft(5, '0')
-            |> Seq.toList
-            |> List.rev
-        match instruction with
-        | '9' :: '9' :: _-> Halt
-        | '1' :: _ :: m1 :: m2 :: m3 :: _ -> parameter3 program (m1, m2, m3) |> Add
-        | '2' :: _ :: m1 :: m2 :: m3 :: _ -> parameter3 program (m1, m2, m3) |> Mult
-        | '3' :: _ :: m1 :: _ -> parameter1 program m1 |> Input
-        | '4' :: _ :: m1 :: _ -> parameter1 program m1 |> Output
-        | '5' :: _ :: m1 :: m2 :: _ -> parameter2 program (m1, m2) |> JumpIfTrue
-        | '6' :: _ :: m1 :: m2 :: _ -> parameter2 program (m1, m2) |> JumpIfFalse
-        | '7' :: _ :: m1 :: m2 :: m3 :: _ -> parameter3 program (m1, m2, m3) |> LessThan
-        | '8' :: _ :: m1 :: m2 :: m3 :: _ -> parameter3 program (m1, m2, m3) |> Equals
-        | '9' :: _ :: m1 :: _ -> parameter1 program m1 |> Offset
+    let inc o p =
+        match o with
+        | Offset _
+        | Halt -> p
+        | Add _
+        | Equals _
+        | LessThan _
+        | Mult _ -> { p with Pointer = &p + 4 }
+        | Output _
+        | Input _ -> { p with Pointer = &p + 2 }
+        | JumpIfFalse _
+        | JumpIfTrue _ -> { p with Pointer = &p + 3 }
 
 
-    let exec program =
-        function
-        | Halt -> program
+    let exec prg op =
+        match op with
+        | Halt -> prg
         | Add(p1, p2, p3) ->
-            write program p3 ((read program p1) + (read program p2))
-            { program with Pointer = program.Pointer + 4 }
+            (get prg p1) + (get prg p2)
+            |> set prg p3
+            |> inc op
         | Mult(p1, p2, p3) ->
-            write program p3 ((read program p1) * (read program p2))
-            { program with Pointer = program.Pointer + 4 }
+            (get prg p1) * (get prg p2)
+            |> set prg p3
+            |> inc op
         | Output p ->
-            program.Term.Write(read program p)
-            { program with Pointer = program.Pointer + 2 }
-        | Input p ->
-            write program p (program.Term.Read())
-            { program with Pointer = program.Pointer + 2 }
+            prg.Term.Write(get prg p)
+            inc op prg
+        | Input p -> set prg p (prg.Term.Read()) |> inc op
         | Equals(p1, p2, p3) ->
             let v =
-                if (read program p2) = (read program p1) then 1
+                if (get prg p2) = (get prg p1) then 1
                 else 0
-            write program p3 v
-            { program with Pointer = program.Pointer + 4 }
+            set prg p3 v |> inc op
         | JumpIfFalse(p1, p2) ->
             let p =
-                if (read program p1) = 0 then read program p2
-                else program.Pointer + 3
-            { program with Pointer = p }
+                if (get prg p1) = 0 then get prg p2
+                else &prg + 3
+            { prg with Pointer = p }
         | JumpIfTrue(p1, p2) ->
             let p =
-                if (read program p1) <> 0 then read program p2
-                else program.Pointer + 3
-            { program with Pointer = p }
+                if (get prg p1) <> 0 then get prg p2
+                else &prg + 3
+            { prg with Pointer = p }
         | LessThan(p1, p2, p3) ->
             let v =
-                if (read program p1) < (read program p2) then 1
+                if (get prg p1) < (get prg p2) then 1
                 else 0
-            write program p3 v
-            { program with Pointer = program.Pointer + 4 }
+            set prg p3 v |> inc op
         | Offset p ->
-            let v = read program p
-            { program with
-                  Pointer = program.Pointer + 2
-                  RelativeBase = program.RelativeBase + v }
+            let v = get prg p
+            { prg with
+                  Pointer = &prg + 2
+                  Register = &&prg + v }
 
 
     let rec run program =
