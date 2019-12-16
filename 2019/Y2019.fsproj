@@ -7,6 +7,7 @@
     <None Include="input/D*.txt" CopyToOutputDirectory="Always" />
     <Compile Include="Library.fs" />
     <Compile Include="IntCode.fs" />
+    <Compile Include="IntCode64.fs" />
     <Compile Include="D01.fs" />
     <Compile Include="D02.fs" />
     <Compile Include="D03.fs" />
