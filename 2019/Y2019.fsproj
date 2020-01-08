@@ -4,7 +4,7 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="input/D*.txt" CopyToOutputDirectory="Always" />
+    <None Include="input/D*.txt" />
     <Compile Include="Library.fs" />
     <Compile Include="IntCode.fs" />
     <Compile Include="IntCode64.fs" />
@@ -17,6 +17,7 @@
     <Compile Include="D07.fs" />
     <Compile Include="D08.fs" />
     <Compile Include="D09.fs" />
+    <Compile Include="D10.fs" />
     <None Include="references.fsx" />
   </ItemGroup>
   <ItemGroup>
