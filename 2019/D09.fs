@@ -14,7 +14,7 @@ type Tests(helper: ITestOutputHelper) =
 
         let program =
             Program.run
-                { Program.Empty with
+                { Program.Empty<int64> with
                       Memory = Program.load source
                       Term = Term.createBufferTerm Seq.empty
                       Log = Some helper.WriteLine }

@@ -7,16 +7,16 @@ type Parameter =
     | Immediate of int64
     | Relative of int
 
-type ITerm =
+type ITerm<'a> =
     abstract Read: unit -> int64
     abstract Write: int64 -> unit
-    abstract Output: int64 list
+    abstract Output: 'a list
 
-type Program =
+type Program<'a> =
     { Name: string
       Pointer: int
       Register: int
-      Term: ITerm
+      Term: ITerm<'a>
       Log: (string -> unit) option
       Memory: Dictionary<int, int64> }
 
@@ -36,26 +36,26 @@ module Term =
     type BufferTerm(initial: int64 seq) =
         let mutable buffer = Queue<int64>(initial)
 
-        interface ITerm with
+        interface ITerm<int64> with
             member __.Read() = buffer.Dequeue()
             member __.Write i = buffer.Enqueue(i)
             member __.Output = buffer |> Seq.toList
 
-    let Null =
-        { new ITerm with
+    let Null<'a> =
+        { new ITerm<'a> with
             member __.Read() = 0L
             member __.Write i = ()
-            member __.Output = List.Empty  }
+            member __.Output = []  }
 
-    let createBufferTerm input = BufferTerm(input) :> ITerm
+    let createBufferTerm input = BufferTerm(input) :> ITerm<int64>
 
 module Program =
-    let Empty =
+    let Empty<'a> =
         { Pointer = 0
           Register = 0
           Name = ""
           Log = None
-          Term = Term.Null
+          Term = Term.Null<'a>
           Memory = Dictionary<int, int64>() }
 
 
@@ -85,7 +85,6 @@ module Program =
         | _ -> Position(int i)
 
     let eval prg =
-        let p = prg &. &prg
         let cmd = (prg &. &prg).ToString().PadLeft(5, '0')
 
         match cmd.Substring(3) with
@@ -99,6 +98,7 @@ module Program =
         | "07" -> LessThan(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2), param cmd.[0] (prg &.+ 3))
         | "08" -> Equals(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2), param cmd.[0] (prg &.+ 3))
         | "09" -> Offset(param cmd.[2] (prg &.+ 1))
+        | s -> failwithf "Uknown op code '%s'" s
 
     let get p o =
         match o with
