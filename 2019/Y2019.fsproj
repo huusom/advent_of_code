@@ -19,6 +19,7 @@
     <Compile Include="D09.fs" />
     <Compile Include="D10.fs" />
     <Compile Include="D11.fs" />
+    <Compile Include="D12.fs" />
     <None Include="references.fsx" />
   </ItemGroup>
   <ItemGroup>

@@ -1,0 +1,12 @@
+{
+    "conventions" : {
+        "naming": { 
+            "memberNames": { 
+                "enabled": true,
+                "config": {
+                    "underscores": "AllowAny"
+                }
+            }
+        }
+    }
+}
