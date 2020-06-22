@@ -1,5 +1,6 @@
 module Y2019.D02
 
+open Library
 open IntCode
 open Xunit
 open System.IO
@@ -25,12 +26,10 @@ let test (source, expected) =
         |> Program.load
         |> Program.run
 
-    let a =
-        p.Memory
-        |> Seq.map (string)
-        |> String.concat ","
-
-    Assert.Equal(expected, a)
+    p.Memory
+    |> Seq.map (string)
+    |> String.concat ","
+    =! expected
 
 [<Theory>]
 [<InlineData(3706713)>]
