@@ -437,3 +437,13 @@ $RECYCLE.BIN/
 
 ## Other Stuff
 references.nuget.fsx
+
+### input files
+2015/*.txt
+2016/*.txt
+2017/*.txt
+2018/*.txt
+2019/*.txt
+
+## cookie.txt
+cookie.txt
