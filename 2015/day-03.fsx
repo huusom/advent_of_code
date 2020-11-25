@@ -14,12 +14,33 @@ let move (x, y) =
 
 let calc input = input |> Seq.scan move (0,0) 
 
-
+// challenge 1
 source
     |> calc
-    |> Seq.skip 1
-    |> Seq.groupBy id
-    |> Seq.map (fun (a, b) -> a, (Seq.length b))
+    |> Seq.distinct
+    |> Seq.length
+
+
+// part two
+
+let evenodd i x = (i % 2 = 0), x
+
+let filter f input = 
+    input 
+    |> Seq.mapi evenodd 
+    |> Seq.filter (fun (santa, _) -> santa = f)
     |> Seq.map snd
-    |> Seq.sum
-    
+
+let santas = 
+    source 
+    |> filter true
+    |> calc
+
+let robots = 
+    source 
+    |> filter false
+    |> calc
+
+Seq.append santas robots 
+    |> Seq.distinct
+    |> Seq.length
