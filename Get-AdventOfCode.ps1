@@ -23,14 +23,18 @@ if (-not (Test-Path $Year)) {
     mkdir $Year | Out-Null
 }
 
+if (-not (Test-Path "./$Year/inputs/")) {
+    mkdir "./$Year/inputs/"
+}
+
 $uri = "https://adventofcode.com/$Year/day/$Day/input"
-$path = "./$Year/{0:00}.txt" -f $Day
+$path = "./$Year/inputs/{0:00}.txt" -f $Day
 
 $result = Invoke-WebRequest -ur $uri -WebSession $session -SkipHttpErrorCheck 
 
 if ($result.StatusCode -eq 200) {
     Write-Host "Writing $uri to $path"
-    Set-Content -Path $path ($result.Content)
+    Set-Content -Path $path ($result.Content.Trim())
 } else {
     Write-Host "Could not download $uri"
 }

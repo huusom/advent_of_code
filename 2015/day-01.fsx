@@ -2,6 +2,14 @@
 
 open System.IO
 
+let year = __SOURCE_DIRECTORY__ |> utils.split '\\' |> Option.map Seq.last 
+__SOURCE_FILE__ 
+
+
+
+
+
+
 let source = utils.load "2015" "01" |> Seq.head
 
 source 
