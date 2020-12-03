@@ -1,5 +1,6 @@
 module Puzzles.day_02
 
+open FsUnit.Xunit
 open Xunit
 open Lib
 open System.Text.RegularExpressions
@@ -8,20 +9,15 @@ open System.Text.RegularExpressions
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 
-open FsUnit.Xunit
-
 let source = File.load 2 |> Seq.filter (System.String.IsNullOrEmpty >> not)
 
 let rx = Regex(@"(\d+)-(\d+) ([a-z]): (.*\3.*)")
 
 let mapping line = 
-    (rx.Match line).Groups
-    |> Seq.cast<Group> 
-    |> Seq.skip 1 
-    |> Seq.map (fun g -> g.Value) 
-    |> Seq.toList 
-    |> function | a::b::c::d::_ -> Some ((int) a, (int) b,c, d.Trim()) | _ -> None
-    
+    line
+    |> Strings.tokenize rx
+    |> Option.map (fun a -> (int) a.[0], (int) a.[1], a.[2], a.[3])
+
 let isvalid_1 (a, b, c, d) = 
     let count  = Regex.Matches(d, c).Count
     count >= a && count <= b
@@ -37,7 +33,6 @@ let data =
       "2-9 c: ccccccccc" ]
     |> List.choose mapping
     |> List.filter isvalid_2
-
 
 let puzzle_1 = 
     source
