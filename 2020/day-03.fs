@@ -8,18 +8,50 @@ open Lib
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 
-let source = File.load 03 
+let source = File.load 03 |> Seq.toArray
 
-let puzzle_1 = 0
+let data =
+    [| "..##......."
+       "#...#...#.."
+       ".#....#..#."
+       "..#.#...#.#"
+       ".#...##..#."
+       "..#.##....."
+       ".#.#.#....#"
+       ".#........#"
+       "#.##...#..."
+       "#...##....#"
+       ".#..#...#.#" |]
 
-let puzzle_2 = 0
+let steps input (right, down) =
+    let width = input |> Seq.head |> String.length
+    let length = input |> Seq.length
+
+    seq { for i in 0 .. ((length - 1) / down) -> (i * right % width), (i * down) }
+
+let lookup (input: string array) (x, y) = input.[y].[x]
 
 
-[<Fact(Skip = "Not done yet")>]
-let ``have source file`` () =  source |> should not' (be None)
+let calc input (right, down) =
+    steps input (right, down)
+    |> Seq.map (lookup input)
+    |> Seq.filter ((=) '#')
+    |> Seq.length
 
-[<Fact(Skip = "Not done yet")>]
-let ``puzzle 1 is correct`` () = puzzle_1 |> should equal 0
+let puzzle_1 source = calc source (3, 1)
 
-[<Fact(Skip = "Not done yet")>]
-let ``puzzle 2 is correct`` () = puzzle_2 |> should equal 0
+let puzzle_2 source =
+    [ 1, 1; 3, 1; 5, 1; 7, 1; 1, 2 ]
+    |> List.map (calc source)
+    |> List.map (int64)
+    |> List.fold (*) 1L
+
+[<Fact>]
+let ``have source file`` () =
+    source |> Seq.isEmpty |> should equal false
+
+[<Fact>]
+let ``puzzle 1 is correct`` () = puzzle_1 source |> should equal 223
+
+[<Fact>]
+let ``puzzle 2 is correct`` () = puzzle_2 source |> should equal 3517401300L
