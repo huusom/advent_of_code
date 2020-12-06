@@ -11,7 +11,6 @@ module File =
         then
             path
             |> File.ReadAllLines
-            |> Seq.filter (String.IsNullOrWhiteSpace >> not)
             |> Seq.cache
         else    
             Seq.empty
