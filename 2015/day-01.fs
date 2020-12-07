@@ -1,4 +1,4 @@
-module Puzzles.day_01
+module aoc2015.day01
 
 open Xunit
 open FsUnit.Xunit
@@ -28,6 +28,7 @@ let puzzle_2 =
 
 
 [<Fact>]
+[<Trait("Category", "2015")>]
 let ``have source file`` () =  source |> should not' (equal "")
 
 [<Fact>]

@@ -1,4 +1,4 @@
-module Puzzles.day_02
+module aoc2016.day02
 
 open Xunit
 open Lib

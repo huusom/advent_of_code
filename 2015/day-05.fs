@@ -1,4 +1,4 @@
-module Puzzles.day_05
+module aoc2015.day05
 
 open FsUnit.Xunit
 open Xunit

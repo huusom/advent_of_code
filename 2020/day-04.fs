@@ -1,4 +1,4 @@
-module Puzzles.day_04
+module aoc2020.day04
 
 open FsUnit.Xunit
 open Xunit

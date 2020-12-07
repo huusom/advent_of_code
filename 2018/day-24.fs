@@ -1,4 +1,4 @@
-module Puzzles.day_24
+module aoc2018.day24
 
 open FsUnit.Xunit
 open Xunit
