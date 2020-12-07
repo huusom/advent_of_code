@@ -4,6 +4,7 @@ open FsUnit.Xunit
 open Xunit
 open Lib
 open System.Text.RegularExpressions
+open Strings
 
 #if INTERACTIVE
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
@@ -11,27 +12,17 @@ System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 
 let source = File.load 4
 
-let tokenizer =Regex(@"(byr|iyr|eyr|hgt|hcl|ecl|pid|cid):([^ ]+)")
+let add map (token:string) =
+    let kv = token |> split ':'
+    Map.add kv.[0] kv.[1] map
 
-let add map token =
-    let m = tokenizer.Match token
-    if m.Success
-    then Map.add (m.Groups.[1].Value) (m.Groups.[2].Value) map
-    else map
-
-let insert map (line: string) = line.Split([| ' ' |]) |> Seq.fold (add) map
+let insert map line = line |> split ' ' |> Seq.fold (add) map
 
 let parse passports line =
     match passports with
     | [] -> (insert Map.empty line) :: []
     | _ when line = "" -> Map.empty :: passports
     | m :: rest -> (insert m line) :: rest
-
-let is_valid_1 map =
-    match Map.count map with
-    | 8 -> true
-    | 7 -> map |> Map.containsKey "cid" |> not
-    | _ -> false
 
 let between l u (v: string) = (int v) >= l && (int v) <= u
 
@@ -41,19 +32,26 @@ let rules kv =
     | ("iyr", v) -> v |> between 2010 2020
     | ("eyr", v) -> v |> between 2020 2030
     | ("hgt", h) ->
-        let a, b = Strings.substrings (h.Length - 2) h
-        match b with
-        | "cm" -> a |> between 150 193
-        | "in" -> a |> between 59 76
+        match h / (h.Length - 2) with
+        | (v, "cm") -> v |> between 150 193
+        | (v, "in") -> v |> between 59 76
         | _ -> false
-    | ("hcl", h) -> Regex.IsMatch(h, "^#[0-9a-f]{6}$")
-    | ("ecl", e) -> Regex.IsMatch(e, "^(amb|blu|brn|gry|grn|hzl|oth)$")
-    | ("pid", p) -> Regex.IsMatch(p, "^\d{9}$")
+    | ("hcl", h) -> h =~ "^#[0-9a-f]{6}$"  //Regex.IsMatch(h, "^#[0-9a-f]{6}$")
+    | ("ecl", e) -> e =~ "^(amb|blu|brn|gry|grn|hzl|oth)$"
+    | ("pid", p) -> p =~ "^\d{9}$"
     | ("cid", _) -> true
+    | _ -> false
+
+let is_valid_1 map =
+    match Map.count map with
+    | 8 -> true
+    | 7 -> map |> Map.containsKey "cid" |> not
     | _ -> false
 
 let is_valid_2 = Map.toSeq >> Seq.forall rules
 
+
+[<Fact>]
 let ``have source file`` () =
     source |> Seq.isEmpty |> should equal false
 
@@ -71,5 +69,5 @@ let ``puzzle 2 is correct`` () =
     |> Seq.fold parse []
     |> Seq.filter is_valid_1
     |> Seq.filter is_valid_2
-    |> Seq.length 
+    |> Seq.length
     |> should equal 111

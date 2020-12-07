@@ -46,6 +46,9 @@ module Strings =
             |> Seq.toArray
             |> Some
 
+    let (/) s i = substrings i s 
+    let (=~) i p = Regex.IsMatch(i, p)
+
 module Sets = 
     let distrib e L =
         let rec aux pre post =
