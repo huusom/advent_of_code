@@ -10,9 +10,6 @@ System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 
 let source = File.load 05
 
-let puzzle_1 = 0
-
-let puzzle_2 = 0
 
 let upper (x, y) =
     let h = (y - x + 1) / 2
