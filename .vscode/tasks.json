@@ -48,7 +48,7 @@
                 "/consoleloggerparameters:NoSummary",
                 "/p:CollectCoverage=true",
                 "/p:CoverletOutputFormat=lcov",
-                "/p:CoverletOutput=${workspaceFolder}/lcov"
+                "/p:CoverletOutput=${workspaceFolder}/lcov.info"
             ],
             "group": {
                 "kind": "test",

@@ -1,4 +1,4 @@
-module aoc2015.day19
+module aoc2015.day_19
 
 open FsUnit.Xunit
 open Xunit

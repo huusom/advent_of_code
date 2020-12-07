@@ -1,4 +1,4 @@
-module aoc2020.day05
+module aoc2020.day_05
 
 open FsUnit.Xunit
 open Xunit
@@ -45,7 +45,7 @@ let ``puzzle 1 is correct`` () =
     source
     |> Seq.map seat_id
     |> Seq.max
-    |> should equal 0
+    |> should equal 947
 
 [<Fact>]
 let ``puzzle 2 is correct`` () =

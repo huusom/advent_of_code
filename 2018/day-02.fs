@@ -1,4 +1,4 @@
-module aoc2018.day02
+module aoc2018.day_02
 
 open Xunit
 open Lib

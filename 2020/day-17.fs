@@ -1,4 +1,4 @@
-module aoc2020.day17
+module aoc2020.day_17
 
 open FsUnit.Xunit
 open Xunit

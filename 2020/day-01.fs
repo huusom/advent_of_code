@@ -1,4 +1,4 @@
-module aoc2020.day01
+module aoc2020.day_01
 
 open Xunit
 open FsUnit.Xunit
@@ -27,7 +27,7 @@ let puzzle_2 =
 
 
 [<Fact>]
-let ``have source file`` () =  source |> should not' (equal Seq.empty)
+let ``have source file`` () =  source |> Seq.isEmpty |> should equal false
 
 [<Fact>]
 let ``puzzle 1 is correct`` () = puzzle_1 |> should equal 605364
