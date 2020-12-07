@@ -10,16 +10,29 @@ System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 open FsUnit.Xunit
 let source = File.load 2
 
-let puzzle_1 = 0
+let split (exp : string) = exp.Split('x') |> Seq.map (int) 
 
-let puzzle_2 = 0
+let calc values = values |> Seq.toList |> function | [l;w;h] -> [ l * w; w * h;  h * l ] |> fun l -> (List.sum l) * 2 + (List.min l)
 
-
-
-let ``have source file`` () =  source |> should not' (be None)
-
-
-let ``puzzle 1 is correct`` () = puzzle_1 |> should equal 0
+let ribbon m =  
+    let a = m |> Seq.sort |> Seq.take 2 |> Seq.map (fun x -> x + x) |> Seq.sum
+    let b = m |> Seq.fold (*) 1
+    a + b
 
 
-let ``puzzle 2 is correct`` () = puzzle_2 |> should equal 0
+[<Fact>]
+let ``have source file`` () =  source |> Seq.isEmpty |> should equal false
+
+[<Fact>]
+let ``puzzle 1 is correct`` () = 
+    source
+    |> Seq.map (split >> calc)
+    |> Seq.sum
+    |> should equal 1586300
+
+[<Fact>]
+let ``puzzle 2 is correct`` () = 
+    source
+    |> Seq.map (split >> ribbon)
+    |> Seq.sum
+    |> should equal 3737498

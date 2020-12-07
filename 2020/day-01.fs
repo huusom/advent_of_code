@@ -11,7 +11,6 @@ System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 
 let source = File.load 1  |> Seq.filter (System.String.IsNullOrEmpty >> not) |> Seq.map (int)
 
-
 let puzzle_1 = 
     let s1 = source |> Set.ofSeq
     let s2 = source |> Seq.map (fun i -> 2020 - i) |> Set.ofSeq
@@ -24,7 +23,6 @@ let puzzle_2 =
     |> Seq.allPairs source
     |> Seq.find (fun (a, (b, c)) -> (a + b + c) = 2020)
     |> fun (a, (b, c)) -> a * b * c
-
 
 [<Fact>]
 let ``have source file`` () =  source |> Seq.isEmpty |> should equal false

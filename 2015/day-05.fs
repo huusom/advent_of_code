@@ -3,23 +3,47 @@ module aoc2015.day_05
 open FsUnit.Xunit
 open Xunit
 open Lib
+open System.Text.RegularExpressions
 
 #if INTERACTIVE
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 
-let source = File.load 05 
+let source = File.load 05
 
-let puzzle_1 = 0
+let is_nice_1 line =
+    let has_three_vowels =
+        Regex.Matches(line, "[aeiou]").Count >= 3
 
-let puzzle_2 = 0
+    let douple_letters = Regex.IsMatch(line, "(\w)\1")
+
+    let not_contains =
+        Regex.IsMatch(line, "(ab|cd|pq|xy)") |> not
+
+    has_three_vowels && douple_letters && not_contains
+
+let is_nice_2 line =
+    let x = Regex.IsMatch(line, @"(\w\w)\w*\1")
+    let y = Regex.IsMatch(line, @"(\w)\w\1")
+    x && y
 
 
-
-let ``have source file`` () =  source |> should not' (be None)
-
-
-let ``puzzle 1 is correct`` () = puzzle_1 |> should equal 0
+[<Fact>]
+let ``have source file`` () =
+    source |> Seq.isEmpty |> should equal false
 
 
-let ``puzzle 2 is correct`` () = puzzle_2 |> should equal 0
+[<Fact>]
+let ``puzzle 1 is correct`` () =
+    source
+    |> Seq.filter is_nice_1
+    |> Seq.length
+    |> should equal 236
+
+
+[<Fact>]
+let ``puzzle 2 is correct`` () =
+    source
+    |> Seq.filter is_nice_2
+    |> Seq.length
+    |> should equal 51
