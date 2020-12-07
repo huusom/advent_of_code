@@ -32,9 +32,11 @@ let count group =
     |> Seq.length
 
 
+[<Fact>]
 let ``have source file`` () =
     source |> Seq.isEmpty |> should equal false
 
+[<Fact>]
 let ``puzzle 1 is correct`` () =
     source
     |> Seq.fold folder [ Set.empty ]
@@ -42,7 +44,7 @@ let ``puzzle 1 is correct`` () =
     |> Seq.sum
     |> should equal 6782
 
-
+[<Fact>]
 let ``puzzle 2 is correct`` () =
     source
     |> Seq.fold add [ [] ]
