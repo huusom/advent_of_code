@@ -2,22 +2,23 @@ module aoc2019.day_02
 
 open FsUnit.Xunit
 open Xunit
-open Lib
+
 open IntCode
 
 #if INTERACTIVE
+#load @"..\Lib\references.fsx"
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 
-let source = File.load 2 |> String.concat System.Environment.NewLine
+let source = File.text 2 
 
 let program a b =
     let p = Program.load source
-    p.Memory.[1] <- a
-    p.Memory.[2] <- b
+    p.M.[1] <- a
+    p.M.[2] <- b
     p
 
-let eval p = (Program.run p).Memory.[0]
+let eval p = (Program.run p).M.[0]
 
 [<Theory>]
 [<InlineData("1,0,0,0,99", "2,0,0,0,99")>]
@@ -30,7 +31,7 @@ let test (source, expected) =
         |> Program.load
         |> Program.run
 
-    p.Memory
+    p.M
     |> Seq.map (string)
     |> String.concat ","
     |> should equal expected

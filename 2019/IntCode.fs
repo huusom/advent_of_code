@@ -1,172 +1,121 @@
 module IntCode
 
-open System
+type Term =
+    | Dummy
+    | Single of int list
+    | Double of int list * int list
+    | Queue of System.Collections.Generic.Queue<int>
 
-type Parameter =
-    | Position of int
-    | Immediate of int
-    | Relative of int
-
-type ITerm =
-    abstract Read: unit -> int
-    abstract Write: int -> unit
-    abstract Output: int list
 
 type Program =
-    { Name: string
-      Pointer: int
-      Register: int
-      Term: ITerm
-      Memory: int [] }
-
-type Op =
-    | Halt
-    | Add of Parameter * Parameter * Parameter
-    | Mult of Parameter * Parameter * Parameter
-    | Input of Parameter
-    | Output of Parameter
-    | JumpIfTrue of Parameter * Parameter
-    | JumpIfFalse of Parameter * Parameter
-    | LessThan of Parameter * Parameter * Parameter
-    | Equals of Parameter * Parameter * Parameter
-    | Offset of Parameter
+    { M: int array
+      P: int
+      T: Term }
 
 module Term =
-    type BufferTerm(initial: int seq) =
-        let mutable buffer = System.Collections.Generic.Queue<int>(initial)
+    let read =
+        function
+        | Dummy -> 0, Dummy
+        | Single (h :: t) -> h, Single t
+        | Double ((h :: t), o) -> h, Double(t, o)
+        | Queue q -> q.Dequeue(), Queue q
 
-        interface ITerm with
-            member __.Read() = buffer.Dequeue()
-            member __.Write i = buffer.Enqueue(i)
-            member __.Output =
-                buffer
-                |> Seq.cast<int>
-                |> Seq.toList
+    let write v =
+        function
+        | Dummy -> Dummy
+        | Single l -> Single(l @ [ v ])
+        | Double (i, o) -> Double(i, v :: o)
+        | Queue q ->
+            q.Enqueue v
+            Queue q
 
-    let Null =
-        { new ITerm with
-            member __.Read() = 0
-            member __.Write i = ()
-            member __.Output = List.Empty }
+    let double l = Double(l, [])
+    let single l = Single l
 
-    let createBufferTerm input = BufferTerm(input) :> ITerm
+    let queue l =
+        System.Collections.Generic.Queue<int>(l: int list)
+        |> Queue
 
 module Program =
-    let Empty =
-        { Pointer = 0
-          Register = 0
-          Name = ""
-          Term = Term.Null
-          Memory = [| 0 |] }
+    open Strings
 
+    let load (input: string) =
+        { M = input.Split(',') |> Array.map (int)
+          P = 0
+          T = Dummy }
 
-    let (~&) p = p.Pointer
-    let inline (&.) p i = try   p.Memory.[i] with _ -> failwithf "get memory.[%i] != %i" p.Memory.Length i 
-    let inline (&.+) p i = p &. (i + &p)
-    let inline (&.=) p (i, v) = try  p.Memory.[i] <- v with _ -> failwithf "set memory.[%i] != %i" p.Memory.Length i 
+    let attach t p = { p with T = t }
 
-    let (~&&) p = p.Register
-    let inline (&&.+) p i = p &. (&&p + i)
+    type Address =
+        | C
+        | I of int
+        | P of int
 
-    let param m i =
-        match m with
-        | '2' -> Relative i
-        | '1' -> Immediate i
-        | _ -> Position i
+    let (>>) prog address =
+        match address with
+        | C -> prog.P
+        | I n -> prog.P + n
+        | P n -> prog.M.[prog.P + n]
 
-    let eval prg =
-        let p = prg &. &prg
-        let cmd = (prg &. &prg).ToString().PadLeft(5, '0')
+    let peek prog address =
+        let i = prog >> address
+        Array.get prog.M (prog >> address)
 
-        match cmd.Substring(3) with
-        | "99" -> Halt
-        | "01" -> Add(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2), param cmd.[0] (prg &.+ 3))
-        | "02" -> Mult(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2), param cmd.[0] (prg &.+ 3))
-        | "03" -> Input(param cmd.[2] (prg &.+ 1))
-        | "04" -> Output(param cmd.[2] (prg &.+ 1))
-        | "05" -> JumpIfTrue(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2))
-        | "06" -> JumpIfFalse(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2))
-        | "07" -> LessThan(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2), param cmd.[0] (prg &.+ 3))
-        | "08" -> Equals(param cmd.[2] (prg &.+ 1), param cmd.[1] (prg &.+ 2), param cmd.[0] (prg &.+ 3))
-        | "09" -> Offset(param cmd.[2] (prg &.+ 1))
+    let poke prog address value =
+        Array.set prog.M (prog >> address) value
+        prog
 
-    let get p o =
-        match o with
-        | Immediate v -> v
-        | Position v -> p &. v
-        | Relative v -> p &. (&&p + v)
+    let read a p =
+        let i, t = Term.read p.T
+        { poke p a i with T = t }
 
-    let set p o x =
-        match o with
-        | Immediate v -> ()
-        | Position v -> p &.= (v, x)
-        | Relative v -> p &.= (&&p+v, x)
-        p
+    let write a p =
+        { p with T = Term.write (peek p a) p.T }
 
-    let inc o p =
-        match o with
-        | Offset _
-        | Halt -> p
-        | Add _
-        | Equals _
-        | LessThan _
-        | Mult _ -> { p with Pointer = &p + 4 }
-        | Output _
-        | Input _ -> { p with Pointer = &p + 2 }
-        | JumpIfFalse _
-        | JumpIfTrue _ -> { p with Pointer = &p + 3 }
+    let jump n p = { p with P = peek p n }
+    let move n p = { p with P = p.P + n }
 
+    let exec p =
+        function
+        | "01", (a, b, c) -> (peek p a) + (peek p b) |> poke p c |> move 4
+        | "02", (a, b, c) -> (peek p a) * (peek p b) |> poke p c |> move 4
+        | "03", (a, _, _) -> p |> read a |> move 2
+        | "04", (a, _, _) -> p |> write a |> move 2
+        | "05", (a, b, _) -> if (peek p a) <> 0 then jump b p else move 3 p
+        | "06", (a, b, _) -> if (peek p a) = 0 then jump b p else move 3 p
+        | "07", (a, b, c) ->
+            (if (peek p a) < (peek p b) then 1 else 0)
+            |> poke p c
+            |> move 4
+        | "08", (a, b, c) ->
+            (if (peek p a) = (peek p b) then 1 else 0)
+            |> poke p c
+            |> move 4
+        | x -> failwithf "unknow operation %A" x
 
-    let exec prg op =
-        match op with
-        | Halt -> prg
-        | Add(p1, p2, p3) ->
-            (get prg p1) + (get prg p2)
-            |> set prg p3
-            |> inc op
-        | Mult(p1, p2, p3) ->
-            (get prg p1) * (get prg p2)
-            |> set prg p3
-            |> inc op
-        | Output p ->
-            prg.Term.Write(get prg p)
-            inc op prg
-        | Input p -> set prg p (prg.Term.Read()) |> inc op
-        | Equals(p1, p2, p3) ->
-            let v =
-                if (get prg p2) = (get prg p1) then 1
-                else 0
-            set prg p3 v |> inc op
-        | JumpIfFalse(p1, p2) ->
-            let p =
-                if (get prg p1) = 0 then get prg p2
-                else &prg + 3
-            { prg with Pointer = p }
-        | JumpIfTrue(p1, p2) ->
-            let p =
-                if (get prg p1) <> 0 then get prg p2
-                else &prg + 3
-            { prg with Pointer = p }
-        | LessThan(p1, p2, p3) ->
-            let v =
-                if (get prg p1) < (get prg p2) then 1
-                else 0
-            set prg p3 v |> inc op
-        | Offset p ->
-            let v = get prg p
-            { prg with
-                  Pointer = &prg + 2
-                  Register = &&prg + v }
+    let eval prog =
+        let code = sprintf "%05i" (peek prog C)
+        let (par, op) = code / 3
 
+        match par with
+        | "000" -> op, (P 1, P 2, P 3)
+        | "001" -> op, (I 1, P 2, P 3)
+        | "010" -> op, (P 1, I 2, P 3)
+        | "011" -> op, (I 1, I 2, P 3)
+        | "100" -> op, (P 1, P 2, I 3)
+        | "101" -> op, (I 1, P 2, I 3)
+        | "110" -> op, (P 1, I 2, I 3)
+        | "111" -> op, (I 1, I 2, I 3)
+        | _ -> failwithf "unknow code %s at %i" code prog.P
 
-    let rec run program =
-        let o = eval program
-        match o with
-        | Halt -> program
-        | _ -> exec program o |> run
+    let rec run prog =
+        match eval prog with
+        | "99", _ -> prog
+        | op -> exec prog op |> run
 
-    let runWithTerm term program = run { program with Term = term }
-
-    let load (source: string) =
-        let m = source.Split([| ',' |]) |> Array.map (int)
-        { Empty with Memory = m }
+    let output prog =
+        match prog.T with
+        | Dummy -> []
+        | Single l -> l
+        | Double (_, o) -> List.rev o
+        | Queue q -> List.ofSeq q

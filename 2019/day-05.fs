@@ -2,36 +2,54 @@ module aoc2019.day_05
 
 open FsUnit.Xunit
 open Xunit
-open Lib
+
 open IntCode
 
 #if INTERACTIVE
+#load @"..\Lib\references.fsx"
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 
-let source = File.text 05 
-
-
-[<Fact()>]
-let ``have source file`` () =  source |> should not' (equal System.String.Empty)
+let source = File.text 05
 
 [<Fact>]
-let testFirst() = 
-    let p = 
-        source
-        |> Program.load
-        |> Program.runWithTerm (Term.createBufferTerm [ 1 ])
-
-    Assert.NotEmpty(p.Term.Output)    
-    Assert.Equal(9219874, List.last p.Term.Output)
+let ``have source file`` () =
+    source
+    |> System.String.IsNullOrWhiteSpace
+    |> should equal false
 
 [<Fact>]
-let testSecond() =
-    let p = 
+let testFirst () =
+    let p =
         source
         |> Program.load
-        |> Program.runWithTerm (Term.createBufferTerm [ 5 ])
+        |> Program.attach (Term.single [ 1 ])
+        |> Program.run
 
-    Assert.NotEmpty(p.Term.Output)    
-    Assert.Equal(5893654, List.head p.Term.Output)
+    p
+    |> Program.output
+    |> List.isEmpty
+    |> should equal false
 
+    p
+    |> Program.output
+    |> List.last
+    |> should equal 9219874
+
+[<Fact>]
+let testSecond () =
+    let p =
+        source
+        |> Program.load
+        |> Program.attach (Term.single [ 5 ])
+        |> Program.run
+
+    p
+    |> Program.output
+    |> List.isEmpty
+    |> should equal false
+
+    p
+    |> Program.output
+    |> List.last
+    |> should equal 5893654
