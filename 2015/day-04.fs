@@ -2,12 +2,13 @@ module aoc2015.day_04
 
 open FsUnit.Xunit
 open Xunit
-open Lib
+
 open System
 open System.Text
 open System.Security.Cryptography
 
 #if INTERACTIVE
+#load @"..\Lib\references.fsx"
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 

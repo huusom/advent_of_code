@@ -3,8 +3,12 @@
     <TargetFramework>net5.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Helpers.fs" />
+    <Compile Include="File.fs" />
+    <Compile Include="Strings.fs" />
+    <Compile Include="Sets.fs" />
+    <None Include="references.fsx" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <PackageReference Include="xunit.runner.console" Version="2.4.1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

@@ -1,9 +1,10 @@
 module aoc2017.day_02
 
 open Xunit
-open Lib
+
 
 #if INTERACTIVE
+#load @"..\Lib\references.fsx"
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 

@@ -2,11 +2,12 @@ module aoc2020.day_08
 
 open FsUnit.Xunit
 open Xunit
-open Lib
+
 open System
 open Strings
 
 #if INTERACTIVE
+#load @"..\Lib\references.fsx"
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 

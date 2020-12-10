@@ -2,11 +2,12 @@ module aoc2020.day_07
 
 open FsUnit.Xunit
 open Xunit
-open Lib
+
 open System.Text.RegularExpressions
 open Strings
 
 #if INTERACTIVE
+#load @"..\Lib\references.fsx"
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 

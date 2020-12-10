@@ -2,12 +2,11 @@ module aoc2019.day_03
 
 open FsUnit.Xunit
 open Xunit
-open Lib
-open Lib.Strings
+open Strings
 open IntCode
 
-
 #if INTERACTIVE
+#load @"..\Lib\references.fsx"
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 

@@ -2,7 +2,7 @@ module aoc2020.day_01
 
 open Xunit
 open FsUnit.Xunit
-open Lib
+
 
 #if INTERACTIVE
 #load "..\Lib\Helpers.fs"

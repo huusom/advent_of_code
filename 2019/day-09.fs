@@ -2,11 +2,12 @@ module aoc2019.day_09
 
 open FsUnit.Xunit
 open Xunit
-open Lib
+
 open Xunit.Abstractions
 open IntCode64
 
 #if INTERACTIVE
+#load @"..\Lib\references.fsx"
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 

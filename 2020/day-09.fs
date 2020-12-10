@@ -2,9 +2,9 @@ module aoc2020.day_09
 
 open FsUnit.Xunit
 open Xunit
-open Lib
 
 #if INTERACTIVE
+#load @"..\Lib\references.fsx"
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
 
@@ -27,7 +27,6 @@ let find size input =
     input
     |> Seq.map int
     |> Seq.windowed (size + 1)
-    |> Seq.skip (size + 1)
     |> Seq.filter (pairs >> not)
     |> Seq.head
     |> Seq.last
@@ -52,14 +51,14 @@ let search target input =
         (List.head l) + (List.last l)
 
 [<Fact>]
-let ``have source file`` () =
+let ``have source file``  =
     source |> Seq.isEmpty |> should equal false
 
 [<Fact>]
-let ``puzzle 1 is correct`` () =
+let ``puzzle 1 is correct``  =
     source |> find 25 |> should equal 14360655
 
 [<Fact>]
-let ``puzzle 2 is correct`` () =
+let ``puzzle 2 is correct``  =
     source |> search 14360655 |> should equal 1962331
 
