@@ -16,7 +16,7 @@ let run_to_end prg i1 i0 =
     prg
     |> Program.attach (Term.single [ i0; i1 ])
     |> Program.run
-    |> Program.output
+    |> Term.output
     |> List.head
 
 let simple_loop prg phases = Seq.fold (run_to_end prg) 0 phases

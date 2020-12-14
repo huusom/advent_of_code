@@ -1,16 +1,27 @@
 module IntCode
 
+type sz = int
+
 type Term =
     | Dummy
-    | Single of int list
-    | Double of int list * int list
-    | Queue of System.Collections.Generic.Queue<int>
+    | Single of sz list
+    | Double of sz list * sz list
+    | Queue of System.Collections.Generic.Queue<sz>
+
+type Op =
+    | STOP
+    | ADD of char list
+    | MULT of char list
+    | IN of char list
+    | OUT of char list
+    | JZ of char list
+    | JNZ of char list
+    | LT of char list
+    | EQ of char list
+    | UNK
 
 
-type Program =
-    { M: int array
-      P: int
-      T: Term }
+type Program = { M: sz array; P: sz; T: Term }
 
 module Term =
     let read =
@@ -29,12 +40,37 @@ module Term =
             q.Enqueue v
             Queue q
 
+    let output prg =
+        match prg.T with
+        | Dummy -> []
+        | Single l -> l
+        | Double (_, o) -> List.rev o
+        | Queue q -> List.ofSeq q
+
     let double l = Double(l, [])
     let single l = Single l
 
     let queue l =
-        System.Collections.Generic.Queue<int>(l: int list)
+        System.Collections.Generic.Queue<sz>(l: sz list)
         |> Queue
+
+module Op =
+    open Strings
+
+    let map str = str |> Seq.rev |> Seq.toList
+
+    let eval code =
+        match code / 3 with
+        | _, "99" -> STOP
+        | par, "01" -> map par |> ADD
+        | par, "02" -> map par |> MULT
+        | par, "03" -> map par |> IN
+        | par, "04" -> map par |> OUT
+        | par, "05" -> map par |> JNZ
+        | par, "06" -> map par |> JZ
+        | par, "07" -> map par |> LT
+        | par, "08" -> map par |> EQ
+        | _ -> UNK
 
 module Program =
     open Strings
@@ -46,76 +82,85 @@ module Program =
 
     let attach t p = { p with T = t }
 
-    type Address =
-        | C
-        | I of int
-        | P of int
+    let (~&) prg = prg.P
+    let (>>) prg n = Array.get prg.M (&prg + n)
+    let (>>>) prg n = (prg >> n) |> Array.get prg.M
 
-    let (>>) prog address =
-        match address with
-        | C -> prog.P
-        | I n -> prog.P + n
-        | P n -> prog.M.[prog.P + n]
-
-    let peek prog address =
-        let i = prog >> address
-        Array.get prog.M (prog >> address)
-
-    let poke prog address value =
-        Array.set prog.M (prog >> address) value
-        prog
-
-    let read a p =
-        let i, t = Term.read p.T
-        { poke p a i with T = t }
-
-    let write a p =
-        { p with T = Term.write (peek p a) p.T }
-
-    let jump n p = { p with P = peek p n }
-    let move n p = { p with P = p.P + n }
-
-    let exec p =
+    let peek prg n =
         function
-        | "01", (a, b, c) -> (peek p a) + (peek p b) |> poke p c |> move 4
-        | "02", (a, b, c) -> (peek p a) * (peek p b) |> poke p c |> move 4
-        | "03", (a, _, _) -> p |> read a |> move 2
-        | "04", (a, _, _) -> p |> write a |> move 2
-        | "05", (a, b, _) -> if (peek p a) <> 0 then jump b p else move 3 p
-        | "06", (a, b, _) -> if (peek p a) = 0 then jump b p else move 3 p
-        | "07", (a, b, c) ->
-            (if (peek p a) < (peek p b) then 1 else 0)
-            |> poke p c
-            |> move 4
-        | "08", (a, b, c) ->
-            (if (peek p a) = (peek p b) then 1 else 0)
-            |> poke p c
-            |> move 4
-        | x -> failwithf "unknow operation %A" x
+        | '0' -> (prg >>> n)
+        | _ -> (prg >> n)
 
-    let eval prog =
-        let code = sprintf "%05i" (peek prog C)
-        let (par, op) = code / 3
+    let poke prg n v = Array.set prg.M (prg >> n) v
 
-        match par with
-        | "000" -> op, (P 1, P 2, P 3)
-        | "001" -> op, (I 1, P 2, P 3)
-        | "010" -> op, (P 1, I 2, P 3)
-        | "011" -> op, (I 1, I 2, P 3)
-        | "100" -> op, (P 1, P 2, I 3)
-        | "101" -> op, (I 1, P 2, I 3)
-        | "110" -> op, (P 1, I 2, I 3)
-        | "111" -> op, (I 1, I 2, I 3)
-        | _ -> failwithf "unknow code %s at %i" code prog.P
+    let addition p0 p1 prg =
+        let a = peek prg 1 p0
+        let b = peek prg 2 p1
+        poke prg 3 (a + b)
+        { prg with P = &prg + 4 }
 
-    let rec run prog =
-        match eval prog with
-        | "99", _ -> prog
-        | op -> exec prog op |> run
+    let multiply p0 p1 prg =
+        let a = peek prg 1 p0
+        let b = peek prg 2 p1
+        poke prg 3 (a * b)
+        { prg with P = &prg + 4 }
 
-    let output prog =
-        match prog.T with
-        | Dummy -> []
-        | Single l -> l
-        | Double (_, o) -> List.rev o
-        | Queue q -> List.ofSeq q
+    let input prg =
+        let v, t = Term.read prg.T
+        poke prg 1 v
+        { prg with P = &prg + 2; T = t }
+
+    let output p0 prg =
+        let a = peek prg 1 p0
+        let t = Term.write a prg.T
+        { prg with P = &prg + 2; T = t }
+
+    let jump_if_true p0 p1 prg =
+        let a = peek prg 1 p0
+        let b = peek prg 2 p1
+        if a <> 0 then { prg with P = b } else { prg with P = &prg + 3 }
+
+    let jump_if_not_true p0 p1 prg =
+        let a = peek prg 1 p0
+        let b = peek prg 2 p1
+        if a = 0 then { prg with P = b } else { prg with P = &prg + 3 }
+
+    let less_than p0 p1 p2 prg =
+        let a = peek prg 1 p0
+        let b = peek prg 2 p1
+        let c = peek prg 3 '1'
+        if a < b then prg.M.[c] <- 1 else prg.M.[c] <- 0
+        { prg with P = &prg + 4 }
+
+    let equal p0 p1 p2 prg =
+        let a = peek prg 1 p0
+        let b = peek prg 2 p1
+        let c = peek prg 3 '1'
+        if a = b then prg.M.[c] <- 1 else prg.M.[c] <- 0
+        { prg with P = &prg + 4 }
+
+
+    let exec prg =
+        function
+        | ADD [ a; b; _ ] -> prg |> addition a b
+        | MULT [ a; b; _ ] -> prg |> multiply a b
+        | IN [ _; _; _ ] -> prg |> input
+        | OUT [ a; _; _ ] -> prg |> output a
+        | JZ [ a; b; _ ] -> prg |> jump_if_true a b
+        | JNZ [ a; b; _ ] -> prg |> jump_if_not_true a b
+        | LT [ a; b; c ] -> prg |> less_than a b c
+        | EQ [ a; b; c ] -> prg |> equal a b c
+
+
+    let rec debug enabled prg =
+        let code = sprintf "%05i" (prg >> 0)
+        let op = Op.eval code
+
+        if (enabled) then printfn "[%05i] %A" &prg op
+
+        match op with
+        | STOP -> prg
+        | UNK -> failwithf "Uknown code '%s' at %i" code prg.P
+        | _ -> exec prg op |> debug enabled
+
+    let run = debug false

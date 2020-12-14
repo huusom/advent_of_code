@@ -1,14 +1,14 @@
 module aoc2019.day_05
 
-open FsUnit.Xunit
-open Xunit
-
-open IntCode
-
 #if INTERACTIVE
 #load @"..\Lib\references.fsx"
+#load "IntCode.fs"
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 #endif
+
+open FsUnit.Xunit
+open Xunit
+open IntCode
 
 let source = File.text 05
 
@@ -27,12 +27,12 @@ let testFirst () =
         |> Program.run
 
     p
-    |> Program.output
+    |> Term.output
     |> List.isEmpty
     |> should equal false
 
     p
-    |> Program.output
+    |> Term.output
     |> List.last
     |> should equal 9219874
 
@@ -45,11 +45,34 @@ let testSecond () =
         |> Program.run
 
     p
-    |> Program.output
+    |> Term.output
     |> List.isEmpty
     |> should equal false
 
     p
-    |> Program.output
+    |> Term.output
     |> List.last
     |> should equal 5893654
+
+
+[<Theory>]
+[<InlineData("3,9,8,9,10,9,4,9,99,-1,8", "8", "1")>]
+[<InlineData("3,9,8,9,10,9,4,9,99,-1,8", "7", "0")>]
+[<InlineData("3,9,7,9,10,9,4,9,99,-1,8", "7", "1")>]
+[<InlineData("3,9,7,9,10,9,4,9,99,-1,8", "8", "0")>]
+[<InlineData("3,3,1108,-1,8,3,4,3,99", "8", "1")>]
+[<InlineData("3,3,1108,-1,8,3,4,3,99", "7", "0")>]
+[<InlineData("3,3,1107,-1,8,3,4,3,99", "7", "1")>]
+[<InlineData("3,3,1107,-1,8,3,4,3,99", "8", "0")>]
+let comparisonTest (source, input:string, expected:string) =
+    Program.load source
+    |> Program.attach (Term.single [(int) input])
+    |> Program.debug true
+    |> Term.output
+    |> List.head
+    |> should equal (int expected)
+
+"3,9,8,9,10,9,4,9,99,-1,8"
+|> Program.load
+|> Program.attach (Term.single [7])
+|> Program.debug true
