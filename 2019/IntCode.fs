@@ -30,6 +30,7 @@ module Term =
         | Single (h :: t) -> h, Single t
         | Double ((h :: t), o) -> h, Double(t, o)
         | Queue q -> q.Dequeue(), Queue q
+        | x -> failwithf "WTF: %A" x
 
     let write v =
         function
@@ -60,7 +61,7 @@ module Op =
     let map str = str |> Seq.rev |> Seq.toList
 
     let eval code =
-        match code / 3 with
+        match code /. 3 with
         | _, "99" -> STOP
         | par, "01" -> map par |> ADD
         | par, "02" -> map par |> MULT
@@ -150,6 +151,7 @@ module Program =
         | JNZ [ a; b; _ ] -> prg |> jump_if_not_true a b
         | LT [ a; b; c ] -> prg |> less_than a b c
         | EQ [ a; b; c ] -> prg |> equal a b c
+        | x -> failwithf "WTF: %A" x
 
 
     let rec debug enabled prg =

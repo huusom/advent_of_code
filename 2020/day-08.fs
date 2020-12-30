@@ -47,6 +47,7 @@ module Prog =
         | Rx "nop (.\d+)" [ _ ] -> nop p
         | Rx "acc (.\d+)" [ n ] -> acc (int n) p
         | Rx "jmp (.\d+)" [ n ] -> jmp (int n) p
+        | x -> failwithf "WTF: %A" x
 
 type Exec =
     | Interminable of Prog

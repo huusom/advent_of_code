@@ -21,6 +21,8 @@ let parse line =
     match line with
     | Rx "mask = (\w+)" [ l ] -> Mask l
     | Rx "mem\[(\d+)\] = (\d+)" [ a; i ] -> Mem((int64 a), (int64 i))
+    | x -> failwithf "WTF: %A" x
+
 
 let value_bitmask m i =
     match m with

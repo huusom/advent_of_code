@@ -33,7 +33,7 @@ let rules kv =
     | ("iyr", v) -> v |> between 2010 2020
     | ("eyr", v) -> v |> between 2020 2030
     | ("hgt", h) ->
-        match h / (h.Length - 2) with
+        match h /. (h.Length - 2) with
         | (v, "cm") -> v |> between 150 193
         | (v, "in") -> v |> between 59 76
         | _ -> false

@@ -31,5 +31,5 @@ let (|Rx|_|) pattern input =
     else
         None
 
-let (/) s i = substrings i s
+let (/.) s i = substrings i s
 let (=~) i p = Regex.IsMatch(i, p)

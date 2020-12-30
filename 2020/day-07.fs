@@ -18,7 +18,7 @@ let rx = Regex @"(\d+) (\w+ \w+) bags?"
 let create_rule line =
     let name =
         line
-        / (line.IndexOf(' ', line.IndexOf(' ') + 1))
+        /. (line.IndexOf(' ', line.IndexOf(' ') + 1))
         |> fst
 
     let system =

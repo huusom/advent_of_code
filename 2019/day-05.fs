@@ -72,7 +72,7 @@ let comparisonTest (source, input:string, expected:string) =
     |> List.head
     |> should equal (int expected)
 
-"3,9,8,9,10,9,4,9,99,-1,8"
-|> Program.load
-|> Program.attach (Term.single [7])
-|> Program.debug true
+// "3,9,8,9,10,9,4,9,99,-1,8"
+// |> Program.load
+// |> Program.attach (Term.single [7])
+// |> Program.debug true
