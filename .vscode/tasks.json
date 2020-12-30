@@ -13,6 +13,7 @@
                 "/property:GenerateFullPaths=true",
                 // Do not generate summary otherwise it leads to duplicate errors in Problems panel
                 "/consoleloggerparameters:NoSummary",
+                "${workspaceFolder}/advent_of_code.sln"
             ],
             "group": {
                 "kind": "build",
@@ -31,6 +32,7 @@
                 "test",
                 // Do not generate summary otherwise it leads to duplicate errors in Problems panel
                 "/consoleloggerparameters:NoSummary",
+                "${workspaceFolder}/advent_of_code.sln"
             ],
             "group": "test",
             "presentation": {
@@ -48,7 +50,8 @@
                 "/consoleloggerparameters:NoSummary",
                 "/p:CollectCoverage=true",
                 "/p:CoverletOutputFormat=lcov",
-                "/p:CoverletOutput=${workspaceFolder}/lcov.info"
+                "/p:CoverletOutput=${workspaceFolder}/lcov.info",
+                "${workspaceFolder}/advent_of_code.sln"
             ],
             "group": {
                 "kind": "test",
