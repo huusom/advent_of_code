@@ -13,7 +13,7 @@ let source = "12,20,0,6,1,17,7"
 type Game =
     { turn: int
       spoken: int
-      history: Map<int, int list> }
+      history: Map<int, int * int> }
 
 
 let parse input =
@@ -23,7 +23,7 @@ let parse input =
       spoken = data |> Array.last |> int
       history =
           data
-          |> Seq.mapi (fun i s -> (int s), [ (i + 1) ])
+          |> Seq.mapi (fun i s -> (int s), ((i + 1), 0))
           |> Map.ofSeq }
 
 let speek game =
@@ -31,9 +31,8 @@ let speek game =
     | None -> 0
     | Some l ->
         match l with
-        | []
-        | [ _ ] -> 0
-        | t1 :: t0 :: _ -> t1 - t0
+        | (_, 0) -> 0
+        | (t1, t0) -> t1 - t0
 
 let insert game num =
     let t = game.turn + 1
@@ -42,11 +41,11 @@ let insert game num =
     | None ->
         { spoken = num
           turn = t
-          history = Map.add num [ t ] game.history }
-    | Some (t0 :: _) ->
+          history = Map.add num (t, 0) game.history }
+    | Some (t0, _) ->
         { spoken = num
           turn = t
-          history = Map.add num [ t; t0 ] game.history }
+          history = Map.add num (t, t0) game.history }
 
 let rec run steps game =
     if steps <= game.turn then
@@ -55,9 +54,9 @@ let rec run steps game =
         game |> speek |> insert game |> run steps
 
 
+[<Fact>]
 let ``have source file`` () =
     source |> Seq.isEmpty |> should equal false
-
 
 
 [<Fact>]
